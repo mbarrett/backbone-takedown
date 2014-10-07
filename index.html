@@ -13,6 +13,8 @@
 	</div>
 
 	<script type="text/template" id="user-list-template">
+		<a href="#/new" class="btn btn-primary">New user</a>
+		<hr />
 		<table class="table striped">
 		 <thead>
 		 	<tr>
@@ -35,6 +37,20 @@
 		</table>
 	</script>
 
+	<script type="text/template" id="edit-user-template">
+		<form class="edit-user-form">
+			<legend>Create user</legend>
+			<label>First name</label>
+			<input type="text" name="firstname" />
+			<label>Last name</label>
+			<input type="text" name="lastname" />
+			<label>Age</label>
+			<input type="text" name="age" />
+			<hr />
+			<button type="submit" class="btn">Create</button>
+		</form>
+	</script>
+
 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script>
@@ -44,8 +60,28 @@
 			options.url = 'http://backbonejs-beginner.herokuapp.com' + options.url;
 		});
 
+		$.fn.serializeObject = function() {
+		  var o = {};
+		  var a = this.serializeArray();
+		  $.each(a, function() {
+		      if (o[this.name] !== undefined) {
+		          if (!o[this.name].push) {
+		              o[this.name] = [o[this.name]];
+		          }
+		          o[this.name].push(this.value || '');
+		      } else {
+		          o[this.name] = this.value || '';
+		      }
+		  });
+		  return o;
+		};
+
 		var Users = Backbone.Collection.extend({
 			url: '/users'
+		});
+
+		var User = Backbone.Model.extend({
+			urlRoot: '/users'
 		});
 
 		var UserList = Backbone.View.extend({
@@ -62,18 +98,45 @@
 			}
 		});
 
-		var Router = Backbone.Router.extend({
-			routes: {
-				'': 'home'
+		var EditUser = Backbone.View.extend({
+			el: '.page',
+			render: function(){
+				var template = _.template($('#edit-user-template').html());
+				this.$el.html(template({}));
+			},
+			events: {
+				'submit .edit-user-form': 'saveUser',
+			},
+			saveUser: function(ev){
+				var userDetails = $(ev.currentTarget).serializeObject();
+				var user = new User();
+				user.save(userDetails, {
+					success: function(user){
+						router.navigate('', {trigger: true});
+					}
+				});
+				return false;
 			}
 		});
 
-		var router = new Router();
-		router.on('route:home', function(){
-			var userList = new UserList();
-			userList.render();
+		var Router = Backbone.Router.extend({
+			routes: {
+				'': 'home',
+				'new': 'editUser'
+			}
 		});
 
+		var userList = new UserList();
+		var editUser = new EditUser();
+
+		var router = new Router();
+
+		router.on('route:home', function(){
+			userList.render();
+		});
+		router.on('route:editUser', function(){
+			editUser.render();
+		});
 		Backbone.history.start();
 	</script>
 </body>

@@ -47,10 +47,13 @@
 			<label>Age</label>
 			<input type="text" name="age" value="<%= user ? user.get('age') : '' %>" />
 			<hr />
+
+			<button type="submit" class="btn"><%= user ? 'Edit' : 'Create' %></button>
+
 			<% if(user) { %>
 				<input type="hidden" name="id" value="<%= user.id %>" />
+				<button type="button" class="btn btn-danger delete">Delete</button>
 			<% }; %>
-			<button type="submit" class="btn"><%= user ? 'Edit' : 'Create' %></button>
 		</form>
 	</script>
 
@@ -107,8 +110,8 @@
 				var that = this;
 				if(options.id){
 					// GET request
-					var user = new User({id: options.id});
-					user.fetch({
+					that.user = new User({id: options.id});
+					that.user.fetch({
 						success: function(user){
 							var template = _.template($('#edit-user-template').html());
 							that.$el.html(template({user: user}));
@@ -122,6 +125,7 @@
 			},
 			events: {
 				'submit .edit-user-form': 'saveUser',
+				'click .delete': 'deleteUser'
 			},
 			saveUser: function(ev){
 				var userDetails = $(ev.currentTarget).serializeObject();
@@ -131,6 +135,14 @@
 						router.navigate('', {trigger: true});
 					}
 				});
+				return false;
+			},
+			deleteUser: function(ev){
+				this.user.destroy({
+					success: function(){
+						router.navigate('', {trigger: true});
+					}
+				})
 				return false;
 			}
 		});
